@@ -1,0 +1,50 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:latest
+    env_file: 
+      - ./backend/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_SERVER: postgres
+      POSTGRES_DB: hw
+    networks:
+      - default
+    ports:
+      - "5400:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+    
+  
+  server:
+    depends_on:
+      - postgres
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/:/backend/
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+
+
+  client:
+    depends_on:
+      - server
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes: 
+      - ./frontend/:/frontend/
+      - '/frontend/node_modules'
+      - '/frontend/dist'
+    ports:
+      - "3333:3333"
+    command: serve -s /frontend/dist -l 3333 
+    
+volumes: 
+  postgres_data:
